@@ -80,6 +80,8 @@ const getChannelVideos = asyncHandler(async (req, res) => {
     // TODO: Get all the videos uploaded by the channel
     const { username } = req.params
     const { page = 1, limit = 10 } = req.query
+    limit = Number(limit)
+    page = Number(page)
     const user = await User.findOne({ username })
 
     if (!user)
@@ -105,7 +107,7 @@ const getChannelVideos = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiResponse(
             200,
-            videos.size() > 0 ? videos : "No more videos found of this channel"
+            videos.length() > 0 ? videos : "No more videos found of this channel"
         )
     )
 })
