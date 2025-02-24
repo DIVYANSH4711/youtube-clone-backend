@@ -79,7 +79,7 @@ const getChannelStats = asyncHandler(async (req, res) => {
 const getChannelVideos = asyncHandler(async (req, res) => {
     // TODO: Get all the videos uploaded by the channel
     const { username } = req.params
-    const { page = 1, limit = 10 } = req.query
+    let { page = 1, limit = 10 } = req.query
     limit = Number(limit)
     page = Number(page)
     const user = await User.findOne({ username })
