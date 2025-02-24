@@ -69,14 +69,94 @@ const getVideoComments = asyncHandler(async (req, res) => {
 
 const addComment = asyncHandler(async (req, res) => {
     // TODO: add a comment to a video
+    const { videoId } = req.params
+    const { content } = req.body
+
+    if (!ObjectId.isValid(videoId))
+        throw new ApiError(
+            400,
+            "Invalid video id. Please provide a valid video id"
+        )
+
+    if (!content)
+        throw new ApiError(400, "Comment content is required")
+
+    const video = await Video.findById(videoId)
+    if (!video)
+        throw new ApiError(404, "Video not found. Please provide a valid video id")
+
+    const comment = await Comment.create({
+        content,
+        video: videoId,
+        owner: req.user._id,
+    })
+
+    const createdComment = await Comment.findById(comment._id)
+
+    if (!createdComment)
+        throw new ApiError(500, "An error occurred while creating the comment")
+
+    return new ApiResponse(
+        201,
+        createdComment,
+        "Comment created successfully"
+    )
 })
 
 const updateComment = asyncHandler(async (req, res) => {
     // TODO: update a comment
+
+    const { commentId } = req.params
+    const { content } = req.body
+
+    if (!ObjectId.isValid(commentId))
+        throw new ApiError(
+            400,
+            "Invalid comment id. Please provide a valid comment id"
+        )
+
+    const comment = await Comment.findById(commentId);
+    if (!comment)
+        throw new ApiError(404, "Comment not found. Please provide a valid comment id")
+
+    comment.content = content
+    comment.updatedAt = Date.now()
+    await comment.save()
+
+    return new ApiResponse(
+        200,
+        comment,
+        "Comment updated successfully"
+    )
 })
 
 const deleteComment = asyncHandler(async (req, res) => {
     // TODO: delete a comment
+    const { commentId } = req.params
+
+    if (!ObjectId.isValid(commentId)) {
+        throw new ApiError(
+            400, 
+            "Invalid comment id. Please provide a valid comment id"
+        )
+    }
+
+    const comment = await Comment.findById(commentId)
+
+    if (!comment) {
+        throw new ApiError(
+            404, 
+            "Comment not found. Please provide a valid comment id"
+        )
+    }
+
+    await comment.remove()
+
+    return new ApiResponse(
+        200,
+        null,
+        "Comment deleted successfully"
+    )
 })
 
 export {
