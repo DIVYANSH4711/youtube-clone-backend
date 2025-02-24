@@ -1,4 +1,4 @@
-import mongoose, { ObjectId } from "mongoose"
+import mongoose, { isValidObjectId }  from "mongoose"
 import { Comment } from "../models/comment.model.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
@@ -8,7 +8,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
     //TODO: get all comments for a video
     const { videoId } = req.params
     const { page = 1, limit = 10 } = req.query
-    if (!ObjectId.isValid(videoId))
+    if (!isValidObjectId(videoId))
         throw new ApiError(
             400,
             "Invalid video id. Please provide a valid video id"
@@ -33,7 +33,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
         },
         {
             $unwind: "$owner",
-        }, 
+        },
         {
             $project: {
                 "owner.username": 1,
@@ -72,7 +72,7 @@ const addComment = asyncHandler(async (req, res) => {
     const { videoId } = req.params
     const { content } = req.body
 
-    if (!ObjectId.isValid(videoId))
+    if (!isValidObjectId(videoId))
         throw new ApiError(
             400,
             "Invalid video id. Please provide a valid video id"
@@ -104,60 +104,45 @@ const addComment = asyncHandler(async (req, res) => {
 })
 
 const updateComment = asyncHandler(async (req, res) => {
-    // TODO: update a comment
+    const { commentId } = req.params;
+    const { content } = req.body;
 
-    const { commentId } = req.params
-    const { content } = req.body
-
-    if (!ObjectId.isValid(commentId))
-        throw new ApiError(
-            400,
-            "Invalid comment id. Please provide a valid comment id"
-        )
+    if (!isValidObjectId(commentId)) {
+        throw new ApiError(400, "Invalid comment id. Please provide a valid comment id");
+    }
 
     const comment = await Comment.findById(commentId);
-    if (!comment)
-        throw new ApiError(404, "Comment not found. Please provide a valid comment id")
+    if (!comment) {
+        throw new ApiError(404, "Comment not found. Please provide a valid comment id");
+    }
 
-    comment.content = content
-    comment.updatedAt = Date.now()
-    await comment.save()
+    comment.content = content;
+    comment.updatedAt = Date.now();
+    await comment.save();
 
-    return new ApiResponse(
-        200,
-        comment,
-        "Comment updated successfully"
-    )
-})
+    return res.status(200).json(
+        new ApiResponse(200, comment, "Comment updated successfully")
+    );
+});
 
 const deleteComment = asyncHandler(async (req, res) => {
-    // TODO: delete a comment
-    const { commentId } = req.params
+    const { commentId } = req.params;
 
-    if (!ObjectId.isValid(commentId)) {
-        throw new ApiError(
-            400, 
-            "Invalid comment id. Please provide a valid comment id"
-        )
+    if (!isValidObjectId(commentId)) {
+        throw new ApiError(400, "Invalid comment id. Please provide a valid comment id");
     }
 
-    const comment = await Comment.findById(commentId)
-
+    const comment = await Comment.findById(commentId);
     if (!comment) {
-        throw new ApiError(
-            404, 
-            "Comment not found. Please provide a valid comment id"
-        )
+        throw new ApiError(404, "Comment not found. Please provide a valid comment id");
     }
 
-    await comment.remove()
+    await Comment.deleteOne({ _id: commentId });
 
-    return new ApiResponse(
-        200,
-        null,
-        "Comment deleted successfully"
-    )
-})
+    return res.status(200).json(
+        new ApiResponse(200, null, "Comment deleted successfully")
+    );
+});
 
 export {
     getVideoComments,
