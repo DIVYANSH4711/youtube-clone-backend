@@ -107,7 +107,7 @@ const getChannelVideos = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiResponse(
             200,
-            videos.length() > 0 ? videos : "No more videos found of this channel"
+            videos.length > 0 ? videos : "No more videos found of this channel"
         )
     )
 })
