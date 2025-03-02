@@ -168,12 +168,11 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 })
 
 const getLikedVideos = asyncHandler(async (req, res) => {
-    //TODO: get all liked videos
-    let { limit = 1, page = 10 } = req.query
-    limit = Number(limit)
-    page = Number(page)
+    let { limit = 10, page = 1 } = req.query; // Default values fixed
+    limit = Number(limit);
+    page = Number(page);
 
-    const likedVideos = await Like.aggregatePaginate([
+    const likedVideos = await Like.aggregate([
         {
             $match: {
                 likedBy: req.user._id,
@@ -188,20 +187,30 @@ const getLikedVideos = asyncHandler(async (req, res) => {
         },
         {
             $limit: limit
+        },
+        {
+            $lookup: {
+                from: "videos", 
+                localField: "video",
+                foreignField: "_id",
+                as: "videoDetails"
+            }
+        },
+        {
+            $unwind: "$videoDetails"
         }
-    ])
+    ]);
 
-    if (!likedVideos)
-        throw new ApiError(404, "No liked videos found")
+    if (!likedVideos.length)
+        throw new ApiError(404, "No liked videos found");
+
     return res
         .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                likedVideos,
-                "Liked videos retrieved successfully"
-            )
-        )
+        .json(new ApiResponse(
+            200, 
+            likedVideos, 
+            "Liked videos retrieved successfully"
+        ));
 })
 
 export {
