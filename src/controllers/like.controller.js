@@ -42,7 +42,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
     const like = await Like.create(
         {
             video: videoId,
-            likedBy: req.user._id
+            likedBy: mongoose.Types.ObjectId(req.user._id)
         }
     )
 
@@ -175,7 +175,7 @@ const getLikedVideos = asyncHandler(async (req, res) => {
     const likedVideos = await Like.aggregate([
         {
             $match: {
-                likedBy: req.user._id,
+                likedBy: new mongoose.Types.ObjectId(req.user._id),
                 video: { $ne: null }
             }
         },
