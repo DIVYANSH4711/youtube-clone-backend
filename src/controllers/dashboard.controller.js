@@ -1,4 +1,4 @@
-import mongoose, { isValidObjectId } from "mongoose"
+import mongoose from "mongoose"
 import { Video } from "../models/video.model.js"
 import { Subscription } from "../models/subscription.model.js"
 import { Like } from "../models/like.model.js"
@@ -8,36 +8,27 @@ import { ApiResponse } from "../utils/ApiResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 
 const getChannelStats = asyncHandler(async (req, res) => {
-    // TODO: Get the channel stats like total video views, total subscribers, total videos, total likes etc.
     const { username } = req.params
 
     const user = await User.findOne({ username })
 
     if (!user) throw new ApiError(404, "User not found")
 
-    const totalSubscribers = await Subscription.aggregatePaginate([
-        {
-            $match: {
-                channel: mongoose.Types.ObjectId(user._id),
-            }
-        },
-        {
-            $count: "totalSubscribers",
-        }
+    // Get total subscribers count
+    const totalSubscribers = await Subscription.aggregate([
+        { $match: { channel: new mongoose.Types.ObjectId(user._id) } },
+        { $count: "totalSubscribers" }
     ])
-    const viewsAndTotalVideos = await Video.aggregatePaginate([
+
+    // Get total views, videos, and likes
+    const viewsAndTotalVideos = await Video.aggregate([
         {
-            $match: { owner: mongoose.Types.ObjectId(user._id) }
+            $match: { owner: new mongoose.Types.ObjectId(user._id) }
         },
         {
             $facet: {
                 totalViews: [
-                    {
-                        $group: {
-                            _id: "$owner",
-                            totalViews: { $sum: "$views" }
-                        }
-                    }
+                    { $group: { _id: null, totalViews: { $sum: "$views" } } }
                 ],
                 totalVideos: [
                     { $count: "totalVideos" }
@@ -52,10 +43,10 @@ const getChannelStats = asyncHandler(async (req, res) => {
                         }
                     },
                     {
-                        $group: {
-                            _id: "$owner",
-                            totalLikes: { $sum: { $size: "$likes" } }
-                        }
+                        $addFields: { likeCount: { $size: "$likes" } }
+                    },
+                    {
+                        $group: { _id: null, totalLikes: { $sum: "$likeCount" } }
                     }
                 ]
             }
@@ -63,52 +54,34 @@ const getChannelStats = asyncHandler(async (req, res) => {
     ])
 
     return res.status(200).json(
-        new ApiResponse(
-            200,
-            {
-                totalSubscribers,
-                totalViews: viewsAndTotalVideos.totalViews[0].totalViews,
-                totalVideos: viewsAndTotalVideos.totalVideos[0].totalVideos,
-                totalLikes: viewsAndTotalVideos.totalLikes[0].totalLikes
-            }
-        )
+        new ApiResponse(200, {
+            totalSubscribers: totalSubscribers?.[0]?.totalSubscribers || 0,
+            totalViews: viewsAndTotalVideos?.[0]?.totalViews?.[0]?.totalViews || 0,
+            totalVideos: viewsAndTotalVideos?.[0]?.totalVideos?.[0]?.totalVideos || 0,
+            totalLikes: viewsAndTotalVideos?.[0]?.totalLikes?.[0]?.totalLikes || 0
+        })
     )
-
 })
 
 const getChannelVideos = asyncHandler(async (req, res) => {
-    // TODO: Get all the videos uploaded by the channel
     const { username } = req.params
     let { page = 1, limit = 10 } = req.query
     limit = Number(limit)
     page = Number(page)
+
     const user = await User.findOne({ username })
 
-    if (!user)
-        throw new ApiError(404, "User not Found")
+    if (!user) throw new ApiError(404, "User not found")
 
-    const videos = await Video.aggregatePaginate([
-        {
-            $match: {
-                owner: mongoose.Types.ObjectId(user._id),
-            }
-        },
-        {
-            $sort: { createdAt: -1 }
-        },
-        {
-            $skip: (page - 1) * limit
-        },
-        {
-            $limit: limit
-        }
+    const videos = await Video.aggregate([
+        { $match: { owner: new mongoose.Types.ObjectId(user._id) } },
+        { $sort: { createdAt: -1 } },
+        { $skip: (page - 1) * limit },
+        { $limit: limit }
     ])
 
     return res.status(200).json(
-        new ApiResponse(
-            200,
-            videos.length > 0 ? videos : "No more videos found of this channel"
-        )
+        new ApiResponse(200, videos.length > 0 ? videos : "No more videos found for this channel")
     )
 })
 
