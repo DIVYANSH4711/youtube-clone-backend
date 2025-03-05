@@ -10,7 +10,9 @@ import { asyncHandler } from "../utils/asyncHandler.js"
 const getChannelStats = asyncHandler(async (req, res) => {
     const { username } = req.params
 
-    const user = await User.findOne({ username })
+    const user = await User.findOne({ 
+        "username": username 
+    })
 
     if (!user) throw new ApiError(404, "User not found")
 
