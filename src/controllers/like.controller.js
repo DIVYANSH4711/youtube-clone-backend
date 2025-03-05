@@ -89,7 +89,7 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
  * Get all liked videos of a user
  */
 const getLikedVideos = asyncHandler(async (req, res) => {
-    let { limit = 10, page = 1 } = req.query;
+    let { limit = 9, page = 1 } = req.query;
     limit = Number(limit);
     page = Number(page);
 

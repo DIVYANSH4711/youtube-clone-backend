@@ -9,6 +9,7 @@ import { asyncHandler } from "../utils/asyncHandler.js"
 
 const getChannelStats = asyncHandler(async (req, res) => {
     const { userId } = req.params
+    console.log("getChannelStats -> userId", userId)
     if (!mongoose.isValidObjectId(userId)) throw new ApiError(400, "Invalid user ID. Please provide a valid ID.")
     const user = await User.findById(userId)
 
