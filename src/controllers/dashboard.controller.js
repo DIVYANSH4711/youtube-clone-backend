@@ -67,7 +67,7 @@ const getChannelStats = asyncHandler(async (req, res) => {
 const getChannelVideos = asyncHandler(async (req, res) => {
     const { username } = req.params
     if (!username.trim()) throw new ApiError(400, "Username is required")
-    let { page = 1, limit = 10 } = req.query
+    let { page = 1, limit = 9 } = req.query
     limit = Number(limit)
     page = Number(page)
 

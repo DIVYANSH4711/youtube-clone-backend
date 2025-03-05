@@ -24,7 +24,7 @@ const createTweet = asyncHandler(async (req, res) => {
 });
 
 const getUserTweets = asyncHandler(async (req, res) => {
-    let { page = 1, limit = 10 } = req.query;
+    let { page = 1, limit = 9 } = req.query;
     page = parseInt(page);
     limit = parseInt(limit);
     const { username } = req.params;
