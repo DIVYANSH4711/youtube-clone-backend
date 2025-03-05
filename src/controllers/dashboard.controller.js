@@ -11,7 +11,10 @@ const getChannelStats = asyncHandler(async (req, res) => {
     const { username } = req.params
     console.log("getChannelStats -> username", username)
     if (!username.trim()) throw new ApiError(400, "Username is required")
-    const user = await User.findOne({ username })
+    const user = await User
+                        .findOne({ username })
+                        .select("-refreshToken -password -watchHistory -email")
+                        
 
     if (!user) throw new ApiError(404, "User not found")
 
@@ -53,14 +56,15 @@ const getChannelStats = asyncHandler(async (req, res) => {
             }
         }
     ])
-
+    const userObject = user.toObject()
     return res.status(200).json(
         new ApiResponse(200, {
             totalSubscribers: totalSubscribers?.[0]?.totalSubscribers || 0,
             totalViews: viewsAndTotalVideos?.[0]?.totalViews?.[0]?.totalViews || 0,
             totalVideos: viewsAndTotalVideos?.[0]?.totalVideos?.[0]?.totalVideos || 0,
-            totalLikes: viewsAndTotalVideos?.[0]?.totalLikes?.[0]?.totalLikes || 0
-        })
+            totalLikes: viewsAndTotalVideos?.[0]?.totalLikes?.[0]?.totalLikes || 0,
+            ...userObject
+        }, "Channel stats retrieved successfully")
     )
 })
 
