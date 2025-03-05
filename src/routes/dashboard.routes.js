@@ -9,7 +9,7 @@ const router = Router();
 
 router.use(verifyJWT); // Apply verifyJWT middleware to all routes in this file
 
-router.route("/:userId/stats").get(getChannelStats);
-router.route("/:userId/videos").get(getChannelVideos);
+router.route("/:username/stats").get(getChannelStats);
+router.route("/:username/videos").get(getChannelVideos);
 
 export default router

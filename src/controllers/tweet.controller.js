@@ -27,16 +27,16 @@ const getUserTweets = asyncHandler(async (req, res) => {
     let { page = 1, limit = 10 } = req.query;
     page = parseInt(page);
     limit = parseInt(limit);
-    const { userId } = req.params;
-    if (!mongoose.isValidObjectId) throw new ApiError(400, "Invalid user ID. Please provide a valid ID");
+    const { username } = req.params;
+    if (!username.trim()) throw new ApiError(400, "Username is required");
 
-    const user = await User.findById(userId);
+    const user = await User.findOne({ username });
     if (!user) throw new ApiError(404, "User not found");
 
     const tweets = await Tweet.aggregate([
         {
             $match: {
-                owner: new mongoose.Types.ObjectId(userId)
+                owner: new mongoose.Types.ObjectId(user._id)
             }
         },
         {
