@@ -37,7 +37,7 @@ app.use("/api/v1/videos", videoRouter)
 app.use("/api/v1/comments", commentRouter)
 app.use("/api/v1/likes", likeRouter)
 app.use("/api/v1/playlist", playlistRouter)
-app.use("/api/v1/u/:username/dashboard", dashboardRouter)
+app.use("/api/v1/u/:userId/dashboard", dashboardRouter)
 
 // http://localhost:8000/api/v1/users/register
 

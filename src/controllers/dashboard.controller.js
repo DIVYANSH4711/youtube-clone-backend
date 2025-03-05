@@ -8,11 +8,9 @@ import { ApiResponse } from "../utils/ApiResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 
 const getChannelStats = asyncHandler(async (req, res) => {
-    const { username } = req.params
-
-    const user = await User.findOne({ 
-        "username": username 
-    })
+    const { userId } = req.params
+    if (!mongoose.isValidObjectId(userId)) throw new ApiError(400, "Invalid user ID. Please provide a valid ID.")
+    const user = await User.findById(userId)
 
     if (!user) throw new ApiError(404, "User not found")
 
@@ -66,12 +64,13 @@ const getChannelStats = asyncHandler(async (req, res) => {
 })
 
 const getChannelVideos = asyncHandler(async (req, res) => {
-    const { username } = req.params
+    const { userId } = req.params
+    if (!mongoose.isValidObjectId(userId)) throw new ApiError(400, "Invalid user ID. Please provide a valid ID.")
     let { page = 1, limit = 10 } = req.query
     limit = Number(limit)
     page = Number(page)
 
-    const user = await User.findOne({ username })
+    const user = await User.findById(userId)
 
     if (!user) throw new ApiError(404, "User not found")
 

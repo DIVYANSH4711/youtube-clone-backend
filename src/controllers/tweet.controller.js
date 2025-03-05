@@ -24,13 +24,33 @@ const createTweet = asyncHandler(async (req, res) => {
 });
 
 const getUserTweets = asyncHandler(async (req, res) => {
-    const { username } = req.params;
-    if (!username) throw new ApiError(400, "Username is required");
+    let { page = 1, limit = 10 } = req.query;
+    page = parseInt(page);
+    limit = parseInt(limit);
+    const { userId } = req.params;
+    if (!mongoose.isValidObjectId) throw new ApiError(400, "Invalid user ID. Please provide a valid ID");
 
-    const user = await User.findOne({ username }).lean();
+    const user = await User.findById(userId);
     if (!user) throw new ApiError(404, "User not found");
 
-    const tweets = await Tweet.find({ owner: user._id }).lean();
+    const tweets = await Tweet.aggregate([
+        {
+            $match: {
+                owner: new mongoose.Types.ObjectId(userId)
+            }
+        },
+        {
+            $sort: {
+                createdAt: -1
+            }
+        },
+        {
+            $skip: (page - 1) * limit
+        },
+        {
+            $limit: limit
+        }
+    ])
 
     if (!tweets.length) throw new ApiError(404, "No tweets found");
 
