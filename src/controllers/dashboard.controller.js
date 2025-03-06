@@ -81,6 +81,15 @@ const getChannelVideos = asyncHandler(async (req, res) => {
 
     const videos = await Video.aggregate([
         { $match: { owner: new mongoose.Types.ObjectId(user._id) } },
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "video",
+                as: "likes"
+            }
+        },
+        { $addFields: { likes: { $size: "$likes" } } },
         { $sort: { createdAt: -1 } },
         { $skip: (page - 1) * limit },
         { $limit: limit }
