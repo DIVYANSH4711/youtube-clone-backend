@@ -122,7 +122,11 @@ const getVideoById = asyncHandler(async (req, res) => {
     if (!video || video.length === 0) throw new ApiError(404, "Video not found");
 
     const Subscribed = await Subscription.findOne({ channel: video[0].owner._id, subscriber: req.user._id });
-
+    const user = await User.findById(req.user._id);
+    if (!user.watchHistory.includes(videoId)) {
+        user.watchHistory.push(videoId);
+        await user.save();
+    }
     await Video.findByIdAndUpdate(videoId, { $inc: { views: 1 } });
 
     return res.status(200).json(new ApiResponse(200, {...video[0], isSubscribed: Subscribed ? true : false }, "Video fetched successfully"));
