@@ -5,9 +5,7 @@ import { Video } from "../models/video.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
-/**
- * Get all comments for a video with pagination.
- */
+const { isValidObjectId } = mongoose;
 const getVideoComments = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
     let { page = 1, limit = 10 } = req.query;
@@ -25,6 +23,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
 
     const comments = await Comment.aggregate([
         { $match: { video: new mongoose.Types.ObjectId(videoId) } },
+        
         {
             $lookup: {
                 from: "users",
@@ -34,6 +33,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
             },
         },
         { $unwind: "$owner" },
+    
         {
             $lookup: {
                 from: "likes",
@@ -42,11 +42,16 @@ const getVideoComments = asyncHandler(async (req, res) => {
                 as: "likes",
             },
         },
+    
         {
             $addFields: {
+                isLiked: {
+                    $in: [new mongoose.Types.ObjectId(userId), "$likes.owner"]
+                },
                 likes: { $size: "$likes" },
             },
         },
+    
         {
             $project: {
                 _id: 1,
@@ -57,23 +62,24 @@ const getVideoComments = asyncHandler(async (req, res) => {
                 "owner.avatar": 1,
                 "owner._id": 1,
                 likes: 1,
+                isLiked: 1,
             },
         },
+    
         { $sort: { createdAt: -1 } },
         { $skip: (page - 1) * limit },
         { $limit: limit },
     ]);
+    
 
     const totalComments = await Comment.countDocuments({ video: videoId });
 
     return res.status(200).json(
-        new ApiResponse(200, { comments, totalComments, page, limit }, "Comments retrieved successfully")
+        new ApiResponse(200, { ...comments, }, "Comments retrieved successfully")
     );
 });
 
-/**
- * Add a comment to a video.
- */
+
 const addComment = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
     const { content } = req.body;

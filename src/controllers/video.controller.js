@@ -66,6 +66,7 @@ const getVideoById = asyncHandler(async (req, res) => {
 
     const video = await Video.aggregate([
         { $match: { _id: new mongoose.Types.ObjectId(videoId) } },
+    
         {
             $lookup: {
                 from: "likes",
@@ -76,20 +77,35 @@ const getVideoById = asyncHandler(async (req, res) => {
         },
         {
             $addFields: {
-                likes: { $size: "$likes" },
+                likes: { $size: "$likes" }, 
             },
         },
+    
         {
             $lookup: {
                 from: "users",
                 foreignField: "_id",
                 localField: "owner",
                 as: "owner",
-            }
+            },
         },
+        { $unwind: "$owner" },
+    
         {
-            $unwind: "$owner"
+            $lookup: {
+                from: "subscriptions",
+                foreignField: "channel", 
+                localField: "owner._id",
+                as: "owner.subscribers",
+            },
         },
+    
+        {
+            $addFields: {
+                "owner.subscriberCount": { $size: "$owner.subscribers" },
+            },
+        },
+    
         {
             $project: {
                 "owner.password": 0,
@@ -97,10 +113,11 @@ const getVideoById = asyncHandler(async (req, res) => {
                 "owner.updatedAt": 0,
                 "owner.watchHistory": 0,
                 "owner.refreshToken": 0,
-                "owner.__v": 0,
-            }
-        }
+                "owner.subscribers": 0, 
+            },
+        },
     ]);
+    
 
     if (!video || video.length === 0) throw new ApiError(404, "Video not found");
 
