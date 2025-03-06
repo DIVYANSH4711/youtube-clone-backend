@@ -46,7 +46,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
         {
             $addFields: {
                 isLiked: {
-                    $in: [new mongoose.Types.ObjectId(userId), "$likes.owner"]
+                    $in: [new mongoose.Types.ObjectId(req.user._id), "$likes.owner"]
                 },
                 likes: { $size: "$likes" },
             },
@@ -75,7 +75,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
     const totalComments = await Comment.countDocuments({ video: videoId });
 
     return res.status(200).json(
-        new ApiResponse(200, { ...comments, }, "Comments retrieved successfully")
+        new ApiResponse(200, { comments: comments}, "Comments retrieved successfully")
     );
 });
 
