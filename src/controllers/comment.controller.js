@@ -5,7 +5,7 @@ import { Video } from "../models/video.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
-const { isValidObjectId } = mongoose;
+// const { isValidObjectId } = mongoose;
 const getVideoComments = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
     let { page = 1, limit = 10 } = req.query;
