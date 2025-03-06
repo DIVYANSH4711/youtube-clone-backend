@@ -7,6 +7,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { Subscription } from "../models/subscription.model.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
     let { page = 1, limit = 10, query = "", sortBy = "createdAt", sortType = "desc", userId } = req.query;
@@ -75,21 +76,39 @@ const getVideoById = asyncHandler(async (req, res) => {
         },
         {
             $addFields: {
-                likesCount: { $size: "$likes" },
+                likes: { $size: "$likes" },
             },
         },
         {
-            $project: {
-                likes: 0, // Remove raw like objects, only send count
-            },
+            $lookup: {
+                from: "users",
+                foreignField: "_id",
+                localField: "owner",
+                as: "owner",
+            }
         },
+        {
+            $unwind: "$owner"
+        },
+        {
+            $project: {
+                "owner.password": 0,
+                "owner.createdAt": 0,
+                "owner.updatedAt": 0,
+                "owner.watchHistory": 0,
+                "owner.refreshToken": 0,
+                "owner.__v": 0,
+            }
+        }
     ]);
 
     if (!video || video.length === 0) throw new ApiError(404, "Video not found");
 
+    const Subscribed = await Subscription.findOne({ channel: video[0].owner._id, subscriber: req.user._id });
+
     await Video.findByIdAndUpdate(videoId, { $inc: { views: 1 } });
 
-    return res.status(200).json(new ApiResponse(200, video[0], "Video fetched successfully"));
+    return res.status(200).json(new ApiResponse(200, {...video[0], isSubscribed: Subscribed ? true : false }, "Video fetched successfully"));
 });
 
 const updateVideo = asyncHandler(async (req, res) => {
