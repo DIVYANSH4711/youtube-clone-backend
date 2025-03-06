@@ -11,7 +11,6 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 const getVideoComments = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
     let { page = 1, limit = 10 } = req.query;
-
     if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "Invalid video ID. Please provide a valid ID.");
     }
@@ -36,6 +35,19 @@ const getVideoComments = asyncHandler(async (req, res) => {
         },
         { $unwind: "$owner" },
         {
+            $lookup: {
+                from: "likes",
+                foreignField: "comment",
+                localField: "_id",
+                as: "likes",
+            },
+        },
+        {
+            $addFields: {
+                likes: { $size: "$likes" },
+            },
+        },
+        {
             $project: {
                 _id: 1,
                 content: 1,
@@ -44,6 +56,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
                 "owner.username": 1,
                 "owner.avatar": 1,
                 "owner._id": 1,
+                likes: 1,
             },
         },
         { $sort: { createdAt: -1 } },
