@@ -77,6 +77,17 @@ const getVideoById = asyncHandler(async (req, res) => {
         },
         {
             $addFields: {
+                isLiked: {
+                    $in: [new mongoose.Types.ObjectId(req.user._id),
+                        {
+                            $map: {
+                                input: "$likes",
+                                as: "like",
+                                in: "$$like.likedBy"
+                            }
+                        }
+                    ]
+                },
                 likes: { $size: "$likes" }, 
             },
         },

@@ -46,7 +46,13 @@ const getVideoComments = asyncHandler(async (req, res) => {
         {
             $addFields: {
                 isLiked: {
-                    $in: [new mongoose.Types.ObjectId(req.user._id), "$likes.owner"]
+                    $in: [new mongoose.Types.ObjectId(req.user._id), {
+                        $map: {
+                            input: "$likes",
+                            as: "like",
+                            in: "$$like.likedBy"
+                        }
+                    }]
                 },
                 likes: { $size: "$likes" },
             },
