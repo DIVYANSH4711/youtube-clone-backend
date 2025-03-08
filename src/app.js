@@ -6,8 +6,7 @@ import { errorHandler } from './utils/errorHandler.js'
 const app = express()
 
 app.use(cors({
-    // origin: process.env.ORIGIN,
-    origin: "http://localhost:5173" 
+    origin: process.env.ORIGIN, 
     credentials: true, 
     allowedHeaders: ["Authorization", "Content-Type"],
 }));
