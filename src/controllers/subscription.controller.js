@@ -82,15 +82,15 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
 
 
 const getSubscribedChannels = asyncHandler(async (req, res) => {
-    const { subscriberId } = req.params;
+    const { channelId } = req.params;
     let { page = 1, limit = 10 } = req.query;
     page = Number(page);
     limit = Number(limit);
 
-    if (!mongoose.isValidObjectId(subscriberId))
+    if (!mongoose.isValidObjectId(channelId))
         throw new ApiError(400, "Invalid subscriber ID. Please provide a valid subscriber ID");
 
-    const user = await User.findById(subscriberId);
+    const user = await User.findById(channelId);
     if (!user)
         throw new ApiError(404, "User not found. Please provide a valid user ID");
 

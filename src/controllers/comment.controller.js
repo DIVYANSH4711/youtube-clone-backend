@@ -4,6 +4,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { Video } from "../models/video.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { User } from "../models/user.model.js";
 
 // const { isValidObjectId } = mongoose;
 const getVideoComments = asyncHandler(async (req, res) => {
@@ -23,7 +24,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
 
     const comments = await Comment.aggregate([
         { $match: { video: new mongoose.Types.ObjectId(videoId) } },
-        
+
         {
             $lookup: {
                 from: "users",
@@ -33,7 +34,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
             },
         },
         { $unwind: "$owner" },
-    
+
         {
             $lookup: {
                 from: "likes",
@@ -42,7 +43,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
                 as: "likes",
             },
         },
-    
+
         {
             $addFields: {
                 isLiked: {
@@ -57,7 +58,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
                 likes: { $size: "$likes" },
             },
         },
-    
+
         {
             $project: {
                 _id: 1,
@@ -72,17 +73,17 @@ const getVideoComments = asyncHandler(async (req, res) => {
                 isLiked: 1,
             },
         },
-    
+
         { $sort: { createdAt: -1 } },
         { $skip: (page - 1) * limit },
         { $limit: limit },
     ]);
-    
+
 
     const totalComments = await Comment.countDocuments({ video: videoId });
 
     return res.status(200).json(
-        new ApiResponse(200, { comments: comments}, "Comments retrieved successfully")
+        new ApiResponse(200, { comments: comments }, "Comments retrieved successfully")
     );
 });
 
@@ -110,8 +111,38 @@ const addComment = asyncHandler(async (req, res) => {
         owner: req.user._id,
     });
 
+    const commentResponse = await Comment.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(comment._id),
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner"
+            }
+        },
+        {
+            $unwind: "$owner",
+        },
+        {
+            $project: {
+                _id: 1,
+                content: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                "owner.username": 1,
+                "owner.fullName": 1,
+                "owner.avatar": 1,
+                "owner._id": 1,
+            }
+        }
+    ])
     return res.status(201).json(
-        new ApiResponse(201, comment, "Comment created successfully")
+        new ApiResponse(201, commentResponse[0], "Comment created successfully")
     );
 });
 

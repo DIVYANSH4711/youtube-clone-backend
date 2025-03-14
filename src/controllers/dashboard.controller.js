@@ -23,7 +23,10 @@ const getChannelStats = asyncHandler(async (req, res) => {
         { $match: { channel: new mongoose.Types.ObjectId(user._id) } },
         { $count: "totalSubscribers" }
     ])
-
+    const isSubscribed = await Subscription.find({
+        channel: new mongoose.Types.ObjectId(user._id),
+        subscriber: new mongoose.Types.ObjectId(req.user._id)
+    })
     // Get total views, videos, and likes
     const viewsAndTotalVideos = await Video.aggregate([
         {
@@ -63,7 +66,8 @@ const getChannelStats = asyncHandler(async (req, res) => {
             totalViews: viewsAndTotalVideos?.[0]?.totalViews?.[0]?.totalViews || 0,
             totalVideos: viewsAndTotalVideos?.[0]?.totalVideos?.[0]?.totalVideos || 0,
             totalLikes: viewsAndTotalVideos?.[0]?.totalLikes?.[0]?.totalLikes || 0,
-            ...userObject
+            ...userObject,
+            isSubscribed: isSubscribed.length > 0 ? true : false
         }, "Channel stats retrieved successfully")
     )
 })
@@ -96,7 +100,7 @@ const getChannelVideos = asyncHandler(async (req, res) => {
     ])
 
     return res.status(200).json(
-        new ApiResponse(200, videos.length > 0 ? videos : "No more videos found for this channel")
+        new ApiResponse(200, videos.length > 0 ? videos : [])
     )
 })
 
