@@ -6,7 +6,7 @@ import { errorHandler } from './utils/errorHandler.js'
 const app = express()
 
 app.use(cors({
-    origin: process.env.ORIGIN, 
+    origin: ["https://video-stream-jet.vercel.app/"], 
     credentials: true, 
     allowedHeaders: ["Authorization", "Content-Type"],
 }));
