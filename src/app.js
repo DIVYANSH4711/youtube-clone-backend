@@ -6,7 +6,7 @@ import { errorHandler } from './utils/errorHandler.js'
 const app = express()
 
 app.use(cors({
-    origin: "https://youtube-clone-frontend-4bh4.onrender.com", 
+    origin: process.env.ORIGIN, 
     credentials: true, 
     allowedHeaders: ["Authorization", "Content-Type"],
 }));
