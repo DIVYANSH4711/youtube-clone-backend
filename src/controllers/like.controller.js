@@ -113,19 +113,33 @@ const getLikedVideos = asyncHandler(async (req, res) => {
         },
         { $unwind: "$videoDetails" },
         {
+            $lookup: {
+                from: "users",
+                localField: "videoDetails.owner",
+                foreignField: "_id",
+                as: "ownerDetails"
+            }
+        },
+        { $unwind: "$ownerDetails" },
+        {
             $project: {
                 _id: "$videoDetails._id",
                 title: "$videoDetails.title",
                 description: "$videoDetails.description",
                 views: "$videoDetails.views",
                 createdAt: "$videoDetails.createdAt",
-                owner: "$videoDetails.owner"
+                thumbnail: "$videoDetails.thumbnail",
+                owner: {
+                    fullName: "$ownerDetails.fullName",
+                    avatar: "$ownerDetails.avatar"
+                }
             }
         }
     ]);
 
     return res.status(200).json(new ApiResponse(200, likedVideos, "Liked videos retrieved successfully"));
 });
+
 
 export {
     toggleCommentLike,

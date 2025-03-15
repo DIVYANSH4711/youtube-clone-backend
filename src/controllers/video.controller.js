@@ -191,10 +191,43 @@ const deleteVideo = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, {}, "Video deleted successfully"));
 });
 
+const getSuggestedVideos = asyncHandler(async (req, res) => {
+    let { limit = 9 } = req.query; 
+    limit = Number(limit);
+
+    const suggestedVideos = await Video.aggregate([
+        { $sample: { size: limit } }, 
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "ownerDetails"
+            }
+        },
+        { $unwind: "$ownerDetails" },
+        {
+            $project: {
+                _id: 1,
+                title: 1,
+                thumbnail: 1,
+                createdAt: 1,
+                owner: {
+                    fullName: "$ownerDetails.fullName",
+                    avatar: "$ownerDetails.avatar"
+                }
+            }
+        }
+    ]);
+
+    return res.status(200).json(new ApiResponse(200, suggestedVideos, "Suggested videos retrieved successfully"));
+});
+
 export {
     getAllVideos,
     publishAVideo,
     getVideoById,
     updateVideo,
     deleteVideo,
+    getSuggestedVideos
 };

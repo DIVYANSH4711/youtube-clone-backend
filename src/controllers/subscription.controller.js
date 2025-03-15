@@ -120,9 +120,6 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
         { $limit: limit }
     ]);
 
-    if (subscriptions.length === 0)
-        throw new ApiError(404, "No subscribed channels found for this user");
-
     return res.status(200).json(new ApiResponse(200, subscriptions, "Subscribed channels fetched successfully"));
 });
 
