@@ -43,7 +43,8 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
     const videoUpload = await uploadOnCloudinary(videoFilePath);
     const thumbnailUpload = await uploadOnCloudinary(thumbnailPath);
-
+    console.log(videoUpload)
+    console.log(thumbnailUpload)
     if (!videoUpload || !videoUpload.url || !thumbnailUpload || !thumbnailUpload.url)
         throw new ApiError(500, "Error uploading video or thumbnail");
 
@@ -212,6 +213,7 @@ const getSuggestedVideos = asyncHandler(async (req, res) => {
                 title: 1,
                 thumbnail: 1,
                 createdAt: 1,
+                views: 1,
                 owner: {
                     fullName: "$ownerDetails.fullName",
                     avatar: "$ownerDetails.avatar"
