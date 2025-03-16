@@ -10,8 +10,9 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Subscription } from "../models/subscription.model.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
-    let { page = 1, limit = 10, query = "", sortBy = "createdAt", sortType = "desc", userId } = req.query;
-
+    let { page = 1, query = ""} = req.query;
+    const limit = 10
+    const userId = req.user._id
     page = parseInt(page);
     limit = parseInt(limit);
 
@@ -19,7 +20,6 @@ const getAllVideos = asyncHandler(async (req, res) => {
     if (query) filter.title = { $regex: query, $options: "i" };
     if (userId && mongoose.isValidObjectId(userId)) filter.owner = userId;
 
-    const sortOrder = sortType === "asc" ? 1 : -1;
     const videos = await Video.find(filter)
         .sort({ [sortBy]: sortOrder })
         .skip((page - 1) * limit)
@@ -216,7 +216,8 @@ const getSuggestedVideos = asyncHandler(async (req, res) => {
                 views: 1,
                 owner: {
                     fullName: "$ownerDetails.fullName",
-                    avatar: "$ownerDetails.avatar"
+                    avatar: "$ownerDetails.avatar",
+                    username: "$ownerDetails.username"
                 }
             }
         }

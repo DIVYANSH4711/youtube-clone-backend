@@ -131,7 +131,8 @@ const getLikedVideos = asyncHandler(async (req, res) => {
                 thumbnail: "$videoDetails.thumbnail",
                 owner: {
                     fullName: "$ownerDetails.fullName",
-                    avatar: "$ownerDetails.avatar"
+                    avatar: "$ownerDetails.avatar",
+                    username: "$ownerDetails.username"
                 }
             }
         }
