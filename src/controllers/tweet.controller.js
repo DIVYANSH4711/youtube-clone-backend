@@ -35,7 +35,7 @@ const createTweet = asyncHandler(async (req, res) => {
         },
         {
             $unwind: "$owner",
-        }, 
+        },
     ]);
 
     return res.status(201).json(new ApiResponse(201, responseTweet[0], "Tweet created successfully"));
@@ -46,17 +46,19 @@ const getUserTweets = asyncHandler(async (req, res) => {
     let { page = 1, limit = 9 } = req.query;
     page = parseInt(page);
     limit = parseInt(limit);
-    
-    const { userId } = req.params
-    console.log(userId)
-    console.log("in getUserTweets")
-    if (!mongoose.isValidObjectId(userId))
-        throw new ApiError(
-            200,
-            "Invalid userId"
-        )
 
-    const user = await User.findById(userId);
+    const { userInfo } = req.params;
+
+    if (!userInfo || userInfo.trim() === "") {
+        throw new ApiError(401, "Invalid userId or username");
+    }
+
+    const query = mongoose.isValidObjectId(userInfo)
+        ? { _id: userInfo }
+        : { username: userInfo }
+
+    const user = await User.findOne(query)
+
     if (!user) throw new ApiError(404, "User not found");
 
     const tweets = await Tweet.aggregate([
@@ -84,9 +86,9 @@ const getUserTweets = asyncHandler(async (req, res) => {
         },
         {
             $addFields: {
-                likes: { $size: "$likes" },  
+                likes: { $size: "$likes" },
                 isLiked: {
-                    $in: [new mongoose.Types.ObjectId(userId), "$likes.likedBy"] // Check if the user has liked the tweet
+                    $in: [new mongoose.Types.ObjectId(req.user._id), "$likes.likedBy"] // Check if the user has liked the tweet
                 }
             }
         },
@@ -210,8 +212,8 @@ const userFollowingTweet = asyncHandler(async (req, res) => {
                                 $filter: {
                                     input: "$likes",
                                     as: "like",
-                                    cond: { 
-                                        $eq: ["$$like.likedBy", new mongoose.Types.ObjectId(userId)] 
+                                    cond: {
+                                        $eq: ["$$like.likedBy", new mongoose.Types.ObjectId(userId)]
                                     }
                                 }
                             }
